@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Feud — Host Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@500;600;700;800&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy-1:#050b2e;--gold-1:#ffd76a;--gold-2:#ffb703;--gold-3:#e6a300;--red-2:#b3001b;--line:rgba(255,215,106,.09);--panel-bg:#0a1140}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;background:radial-gradient(ellipse at 50% -10%,#1a2b8f 0%,transparent 55%),repeating-linear-gradient(0deg,var(--line) 0 1px,transparent 1px 42px),repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 42px),linear-gradient(180deg,var(--navy-1),#020617 85%);color:#f4f0e6;font-family:'Archivo',sans-serif;overflow-x:hidden}
+.stage{max-width:1180px;margin:0 auto;padding:28px 20px 40px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.brand{text-align:center}
+.brand h1{font-family:'Anton',sans-serif;font-size:clamp(2.6rem,6vw,4.6rem);letter-spacing:2px;margin:0;line-height:.95;background:linear-gradient(180deg,#fff6d8,var(--gold-2) 45%,var(--gold-3) 55%,#a86c00);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #5c3a00)}
+.brand span.small{display:block;font-weight:700;font-size:.72rem;letter-spacing:3px;color:#8fa3ff;margin-top:4px}
+
+/* main view: full-width centered column */
+#mainBoardView{width:100%;display:flex;flex-direction:column;align-items:center;gap:18px}
+.question-nav{display:flex;justify-content:center;align-items:center;gap:12px;width:100%;margin:0 auto}
+.nav-btn{display:flex;align-items:center;gap:6px}
+.nav-btn:disabled{opacity:.35;cursor:not-allowed}
+.q-counter{font-family:'Anton',sans-serif;font-size:.9rem;letter-spacing:1px;color:var(--gold-1);background:rgba(255,183,3,.08);border:1px solid rgba(255,183,3,.35);border-radius:100px;padding:6px 16px;min-width:90px;text-align:center}
+.question-banner{width:100%;max-width:920px;background:linear-gradient(180deg,#1a2470,#0d1450);border:2px solid var(--gold-2);border-radius:14px;padding:14px 26px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.question-banner p{margin:0;font-size:clamp(1rem,2.4vw,1.35rem);font-weight:700;color:#fff7e0}
+.question-banner .q-label{display:block;font-size:.68rem;letter-spacing:3px;color:var(--gold-2);font-weight:800;margin-bottom:4px}
+.board-wrap{width:100%;display:flex;flex-direction:column;align-items:center;gap:18px}
+.board{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:12px;width:100%;max-width:920px}
+.card{perspective:1200px;height:78px;cursor:pointer}
+.card-inner{position:relative;width:100%;height:100%;transition:transform .55s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d}
+.card.revealed .card-inner{transform:rotateY(180deg)}
+.card-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:10px;display:flex;align-items:center;padding:0 18px;font-weight:800}
+.card-front{background:linear-gradient(180deg,#1c2a86,#0c1552);border:2px solid #3247b8;box-shadow:0 6px 14px rgba(0,0,0,.45);justify-content:center}
+.card-front .num{font-family:'Anton',sans-serif;font-size:2rem;color:#a9b8ff}
+.card-back{background:linear-gradient(180deg,#ffe08a,#ffb703 60%,#e69500);border:2px solid #7a4e00;color:#3a2200;transform:rotateY(180deg);justify-content:space-between;box-shadow:0 6px 16px rgba(0,0,0,.5)}
+.card-back{padding:6px 14px 6px 18px}
+.ans-text{flex:1 1 0;min-width:0;align-self:stretch;display:flex;align-items:center;margin-right:12px;font-size:1rem;font-weight:800;text-transform:uppercase;line-height:1.05;overflow:hidden}
+.fit-inner{display:block;width:100%;overflow-wrap:break-word;word-break:break-word;hyphens:auto}
+.ans-pts{flex:0 0 auto;background:#3a2200;color:var(--gold-1);font-family:'Anton',sans-serif;font-size:1.15rem;padding:4px 12px;border-radius:7px;min-width:46px;text-align:center}
+.round-total{display:flex;align-items:center;gap:14px;background:radial-gradient(circle at 35% 30%,#2a1a00,#120b00 75%);border:3px solid var(--gold-2);border-radius:100px;padding:10px 26px;box-shadow:0 0 30px rgba(255,183,3,.25)}
+.round-total .label{font-size:.68rem;letter-spacing:3px;font-weight:800;color:#ffce6b}
+.round-total .value{font-family:'Anton',sans-serif;font-size:2.2rem;color:var(--gold-1);min-width:70px;text-align:center}
+.mult-badge{background:var(--red-2);color:#fff2e0;font-family:'Anton',sans-serif;font-size:.85rem;padding:2px 10px;border-radius:6px;border:1px solid #ff7a7a}
+.strike-track{display:flex;gap:10px}
+.strike-slot{width:46px;height:46px;border-radius:8px;border:2px solid #45327a;background:rgba(255,255,255,.02);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:1.6rem;color:transparent;transition:all .25s}
+.strike-slot.on{color:#fff;background:linear-gradient(180deg,#ff5b5b,var(--red-2));border-color:#ff9a9a;box-shadow:0 0 18px rgba(255,59,59,.65)}
+.scoreboard{width:100%;max-width:920px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.team-box{background:linear-gradient(180deg,#101c60,#070d38);border:2px solid #2a3a9c;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.team-name{background:transparent;border:none;border-bottom:2px dashed rgba(255,215,106,.35);color:var(--gold-1);font-family:'Archivo',sans-serif;font-weight:800;font-size:.95rem;letter-spacing:2px;text-align:center;text-transform:uppercase;width:100%;padding:4px 2px}
+.team-name:focus{outline:none;border-bottom-color:var(--gold-2)}
+.score{font-family:'Anton',sans-serif;font-size:3rem;color:#fff;text-shadow:0 0 20px rgba(120,150,255,.5)}
+.btn{font-family:'Archivo',sans-serif;font-weight:700;font-size:.85rem;border-radius:9px;border:none;padding:9px 16px;cursor:pointer;transition:transform .12s,filter .12s}
+.btn:active{transform:translateY(1px) scale(.98)}
+.btn-award{background:linear-gradient(180deg,var(--gold-1),var(--gold-3));color:#3a2200;width:100%}
+.btn-ghost{background:rgba(255,255,255,.05);color:#cfd6ff;border:1px solid rgba(255,255,255,.14)}
+.btn-ghost:hover{background:rgba(255,255,255,.1)}
+.btn-ghost b{color:var(--gold-1)}
+.btn-danger{background:linear-gradient(180deg,#ff5b5b,var(--red-2));color:#fff2e0}
+.btn-mode{background:linear-gradient(180deg,#6a7dff,#3246c9);color:#fff}
+.control-bar{width:100%;max-width:920px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:4px}
+kbd{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.2);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:.78em}
+.hint{color:#7f8bd6;font-size:.78rem;text-align:center;max-width:820px;line-height:1.6}
+.strike-overlay{position:fixed;inset:0;background:radial-gradient(ellipse at center,rgba(179,0,27,.92),rgba(40,0,4,.96));display:flex;align-items:center;justify-content:center;gap:2vw;opacity:0;pointer-events:none;z-index:999}
+.strike-overlay.show{opacity:1;animation:flash-bg .5s ease}
+@keyframes flash-bg{0%{background:rgba(255,255,255,.95)}15%{background:rgba(179,0,27,.92)}}
+.strike-x-big{font-family:'Anton',sans-serif;font-size:min(28vw,260px);color:#fff;text-shadow:0 0 60px rgba(255,90,90,.9),0 0 10px #fff;transform:scale(.2);opacity:0}
+.strike-overlay.show .strike-x-big{animation:punch-in .45s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes punch-in{0%{transform:scale(2.4) rotate(-8deg);opacity:0}55%{transform:scale(.9) rotate(3deg);opacity:1}100%{transform:scale(1);opacity:1}}
+
+/* admin */
+.admin-scrim{position:fixed;inset:0;background:rgba(2,5,20,.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:900}
+.admin-scrim.open{opacity:1;pointer-events:auto}
+.admin-panel{position:fixed;top:0;right:0;height:100%;width:min(460px,92vw);background:var(--panel-bg);border-left:2px solid var(--gold-3);box-shadow:-14px 0 40px rgba(0,0,0,.6);transform:translateX(100%);transition:transform .3s ease;z-index:950;display:flex;flex-direction:column}
+.admin-panel.open{transform:translateX(0)}
+.admin-head{padding:18px 20px;border-bottom:1px solid rgba(255,215,106,.2);display:flex;align-items:center;justify-content:space-between}
+.admin-head h2{margin:0;font-family:'Anton',sans-serif;letter-spacing:1px;color:var(--gold-1);font-size:1.3rem}
+.admin-close{background:none;border:none;color:#cfd6ff;font-size:1.4rem;cursor:pointer}
+.admin-body{padding:16px 20px 40px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:22px}
+.admin-section h3{margin:0 0 10px;font-size:.72rem;letter-spacing:2.5px;color:#8fa3ff;font-weight:800}
+.editing-label{font-size:.68rem;color:var(--gold-2);font-weight:700;letter-spacing:1px;margin-bottom:6px;display:block}
+.field label{display:block;font-size:.72rem;color:#a9b3e8;margin-bottom:5px;font-weight:600}
+.field input[type=text],.field textarea,.field select{width:100%;background:#0e1750;border:1px solid #2a3a9c;color:#f4f0e6;border-radius:8px;padding:8px 10px;font-family:'Archivo',sans-serif;font-size:.88rem}
+.field textarea{resize:vertical;min-height:80px;font-family:monospace;font-size:.78rem}
+.field{margin-bottom:10px}
+.answer-row{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.answer-row .idx{width:20px;flex:0 0 auto;font-weight:800;color:var(--gold-2);font-size:.85rem}
+.answer-row input[type=text]{flex:1;background:#0e1750;border:1px solid #2a3a9c;color:#f4f0e6;border-radius:7px;padding:7px 8px;font-size:.82rem}
+.answer-row input[type=number]{width:64px;background:#0e1750;border:1px solid #2a3a9c;color:var(--gold-1);border-radius:7px;padding:7px 6px;font-size:.82rem;text-align:center}
+.answer-row button{background:rgba(255,91,91,.15);border:1px solid rgba(255,91,91,.5);color:#ff9a9a;border-radius:7px;width:28px;height:30px;cursor:pointer;font-weight:800}
+.row-btns{display:flex;gap:8px}.row-btns .btn{flex:1}
+.mult-row{display:flex;gap:8px}
+.mult-btn{flex:1;background:#0e1750;border:1px solid #2a3a9c;color:#cfd6ff;padding:9px 0;border-radius:8px;font-family:'Anton',sans-serif;font-size:1rem;cursor:pointer}
+.mult-btn.active{background:linear-gradient(180deg,var(--gold-1),var(--gold-3));color:#3a2200;border-color:var(--gold-3)}
+.deck-list{max-height:230px;overflow-y:auto;border:1px solid #2a3a9c;border-radius:10px;padding:6px;background:#0e1750;margin-bottom:10px}
+.deck-row{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;cursor:pointer}
+.deck-row:hover{background:rgba(255,255,255,.04)}
+.deck-row.active{background:rgba(255,183,3,.14);border:1px solid rgba(255,183,3,.5)}
+.deck-idx{font-family:'Anton',sans-serif;color:var(--gold-2);font-size:.85rem;width:18px}
+.deck-text{flex:1;font-size:.8rem;color:#e7ecff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.deck-btns{display:flex;gap:4px}
+.deck-btns button{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#cfd6ff;border-radius:6px;width:24px;height:24px;font-size:.7rem;cursor:pointer}
+.deck-btns button:disabled{opacity:.25;cursor:not-allowed}
+.deck-btns button[data-act="del"]{color:#ff9a9a;border-color:rgba(255,91,91,.4)}
+.fm-admin-block{border:1px solid #2a3a9c;border-radius:9px;padding:10px 10px 12px;margin-bottom:10px;background:#0e1750}
+.fm-admin-label{font-size:.68rem;color:var(--gold-2);font-weight:800;letter-spacing:1px;display:block;margin-bottom:6px}
+.fm-admin-question{width:100%;margin-bottom:8px;background:#101c60;border:1px solid #2a3a9c;color:#f4f0e6;border-radius:6px;padding:6px 8px;font-size:.8rem;font-family:'Archivo',sans-serif}
+.fm-admin-players{display:flex;gap:8px}
+.fm-admin-player{flex:1;display:flex;align-items:center;gap:4px}
+.fm-admin-player span{font-size:.68rem;color:#8fa3ff;font-weight:800;width:16px}
+.fm-admin-ans{flex:1;min-width:0;background:#101c60;border:1px solid #2a3a9c;color:#f4f0e6;border-radius:6px;padding:5px 6px;font-size:.74rem}
+.fm-admin-pts{width:50px;background:#101c60;border:1px solid #2a3a9c;color:var(--gold-1);border-radius:6px;padding:5px 4px;font-size:.74rem;text-align:center}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#2a3a9c;border-radius:8px}
+
+/* =========== FAST MONEY — TV STYLE =========== */
+.fm-wrap{width:100%;max-width:1100px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.fm-header h2{font-family:'Anton',sans-serif;font-size:clamp(1.8rem,4vw,2.6rem);letter-spacing:2px;margin:0;background:linear-gradient(180deg,#fff6d8,var(--gold-2) 45%,var(--gold-3));-webkit-background-clip:text;background-clip:text;color:transparent}
+.fm-timer-badge{display:flex;align-items:center;gap:16px;padding:8px 38px;border-radius:100px;background:radial-gradient(ellipse at 50% 20%,#3d7bff,#0a2fb0 70%);border:4px solid #bcd3ff;box-shadow:0 0 28px rgba(60,120,255,.6),inset 0 2px 8px rgba(255,255,255,.35);font-family:'Oswald','Impact',sans-serif;color:#fff}
+.fm-timer-badge #fmTimerLabel{font-size:.9rem;letter-spacing:3px;font-weight:700;color:#cfe0ff}
+.fm-timer-badge #fmTimerValue{font-size:3rem;font-weight:700;line-height:1;min-width:64px;text-align:center}
+.fm-timer-badge.low{background:radial-gradient(ellipse at 50% 20%,#ff6b6b,#a80014 70%);border-color:#ffc4c4;box-shadow:0 0 28px rgba(255,59,59,.7)}
+.fm-tv{width:100%;background:#000;border:4px solid #3a3a3a;border-radius:18px;padding:16px 16px 10px;box-shadow:0 10px 40px rgba(0,0,0,.7)}
+.fm-tv-head,.fm-pair{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.fm-tv-head span{text-align:center;font-family:'Oswald','Impact',sans-serif;letter-spacing:4px;font-size:1rem;color:var(--gold-1);padding-bottom:8px}
+.fm-row{margin-bottom:10px}
+.fm-q-cap{font-size:.72rem;color:#7f8bd6;margin:0 4px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fm-tv.hide-q .fm-q-cap{display:none}
+.fm-slot{display:flex;align-items:stretch;height:74px;background:#000;border:3px solid #d8dbe2;border-radius:12px;overflow:hidden;cursor:pointer;user-select:none}
+.fm-slot-ans{flex:1 1 0;min-width:0;display:flex;align-items:center;padding:6px 14px 6px 18px;font-family:'Oswald','Impact',sans-serif;font-weight:700;font-size:1.7rem;text-transform:uppercase;letter-spacing:1px;line-height:1.05;color:#fff;overflow:hidden}
+.fm-slot-pts{flex:0 0 84px;display:flex;align-items:center;justify-content:center;background:#16181d;border-left:3px solid #d8dbe2;font-family:'Oswald','Impact',sans-serif;font-weight:700;font-size:2rem;color:#fff}
+.fm-slot:not(.revealed) .fm-slot-ans,.fm-slot:not(.revealed) .fm-slot-pts{visibility:hidden}
+.fm-slot.revealed .fm-slot-ans,.fm-slot.revealed .fm-slot-pts{animation:fmIn .35s ease}
+@keyframes fmIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+.fm-bottom{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.fm-host{display:flex;gap:8px;flex-wrap:wrap}
+.fm-total-box{display:flex;align-items:center;gap:20px;background:#000;border:4px solid #d8dbe2;border-radius:14px;padding:8px 26px;margin-left:auto;font-family:'Oswald','Impact',sans-serif;color:#fff}
+.fm-total-box .fm-total-label{font-size:1.6rem;letter-spacing:3px;font-weight:700}
+.fm-total-box #fmTotalValue{font-size:3.4rem;font-weight:700;line-height:1;min-width:100px;text-align:right}
+.fm-total-box.hit{border-color:#2ecc71;box-shadow:0 0 28px rgba(46,204,113,.7)}
+@media (max-width:640px){.board,.scoreboard{grid-template-columns:1fr}.fm-tv-head,.fm-pair{gap:8px}.fm-slot{height:58px}.fm-slot-ans{padding:4px 8px}.fm-slot-pts{flex-basis:56px;font-size:1.3rem}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="brand">
+    <span class="small">ANIME HOLICS ORGANIZATION</span>
+    <h1>SURVEY SAYS</h1>
+  </div>
+
+  <!-- MAIN BOARD VIEW -->
+  <div id="mainBoardView">
+    <div class="question-nav">
+      <button class="btn btn-ghost nav-btn" id="prevBtn" onclick="prevQuestion()"><b>P</b> ◀ Prev</button>
+      <span class="q-counter" id="qCounter">Q 1 / 1</span>
+      <button class="btn btn-ghost nav-btn" id="nextBtn" onclick="nextQuestion()">Next ▶ <b>N</b></button>
+    </div>
+
+    <div class="question-banner">
+      <span class="q-label">SURVEY QUESTION</span>
+      <p id="questionText">Loading…</p>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+      <div class="strike-track" id="strikeTrack">
+        <div class="strike-slot">X</div><div class="strike-slot">X</div><div class="strike-slot">X</div>
+      </div>
+      <div class="round-total">
+        <span class="label">ROUND TOTAL</span>
+        <span class="value" id="roundTotal">0</span>
+        <span class="mult-badge" id="multBadge">1×</span>
+      </div>
+    </div>
+
+    <div class="scoreboard">
+      <div class="team-box">
+        <input class="team-name" id="team0Name" value="FAMILY 1" maxlength="18">
+        <div class="score" id="team0Score">0</div>
+        <button class="btn btn-award" onclick="awardPoints(0)">Award Round Points →</button>
+      </div>
+      <div class="team-box">
+        <input class="team-name" id="team1Name" value="FAMILY 2" maxlength="18">
+        <div class="score" id="team1Score">0</div>
+        <button class="btn btn-award" onclick="awardPoints(1)">← Award Round Points</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAST MONEY VIEW -->
+  <div class="fm-wrap" id="fastMoneyView" style="display:none;">
+    <div class="fm-header"><h2>FAST MONEY</h2></div>
+
+    <div class="fm-timer-badge" id="fmTimerBadge">
+      <span id="fmTimerLabel">PLAYER 1</span>
+      <span id="fmTimerValue">20</span>
+    </div>
+
+    <div class="fm-tv" id="fmTv">
+      <div class="fm-tv-head"><span>PLAYER 1</span><span>PLAYER 2</span></div>
+      <div id="fmRows"></div>
+    </div>
+
+    <div class="fm-bottom">
+      <div class="fm-host">
+        <button class="btn btn-ghost" onclick="startP1Timer()"><b>T</b> P1 Timer (20s)</button>
+        <button class="btn btn-ghost" onclick="startP2Round()"><b>Y</b> P2 Timer (25s)</button>
+        <button class="btn btn-danger" onclick="triggerDuplicateBuzzer()"><b>D</b> Duplicate</button>
+        <button class="btn btn-ghost" onclick="toggleFmQuestions()">Show/Hide Questions</button>
+        <button class="btn btn-ghost" onclick="resetFastMoney()">Reset</button>
+      </div>
+      <div class="fm-total-box" id="fmTotalBox">
+        <span class="fm-total-label">TOTAL</span>
+        <span id="fmTotalValue">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="control-bar">
+    <button class="btn btn-mode" id="modeToggleBtn" onclick="toggleMode()">🎯 Fast Money (M)</button>
+    <button class="btn btn-ghost" onclick="toggleAdmin()"><b>E</b> Edit Game</button>
+    <button class="btn btn-ghost" onclick="resetBoard()"><b>R</b> Reset Round</button>
+    <button class="btn btn-ghost" onclick="resetStrikes()">Clear Strikes</button>
+    <button class="btn btn-danger" onclick="playFaceoffBuzzer()">🔔 Face-Off Buzzer</button>
+  </div>
+
+  <p class="hint" id="hintText"></p>
+</div>
+
+<div class="strike-overlay" id="strikeOverlay">
+  <span class="strike-x-big">X</span><span class="strike-x-big">X</span><span class="strike-x-big">X</span>
+</div>
+
+<div class="admin-scrim" id="adminScrim" onclick="closeAdmin()"></div>
+<div class="admin-panel" id="adminPanel">
+  <div class="admin-head"><h2>Edit Game</h2><button class="admin-close" onclick="closeAdmin()">✕</button></div>
+  <div class="admin-body">
+    <div class="admin-section">
+      <h3>Questions Deck (Main Board)</h3>
+      <div class="deck-list" id="questionDeck"></div>
+      <div class="row-btns"><button class="btn btn-ghost" onclick="addNewQuestion()">+ Add New Question</button></div>
+    </div>
+    <div class="admin-section">
+      <span class="editing-label" id="editingLabel">Editing Question 1 of 1</span>
+      <h3>Question Prompt</h3>
+      <div class="field"><input type="text" id="adminQuestion" placeholder="Type the survey question…"></div>
+    </div>
+    <div class="admin-section">
+      <h3>Answers &amp; Points (this question)</h3>
+      <div id="answerRows"></div>
+      <div class="row-btns"><button class="btn btn-ghost" id="addSlotBtn" onclick="addAnswerSlot()">+ Add Slot</button></div>
+    </div>
+    <div class="admin-section">
+      <h3>Point Multiplier</h3>
+      <div class="mult-row" id="multRow">
+        <button class="mult-btn" data-mult="1">1×</button>
+        <button class="mult-btn" data-mult="2">2×</button>
+        <button class="mult-btn" data-mult="3">3×</button>
+      </div>
+    </div>
+    <div class="admin-section">
+      <h3>Team Names</h3>
+      <div class="field"><label>Family 1</label><input type="text" id="adminTeam0" maxlength="18"></div>
+      <div class="field"><label>Family 2</label><input type="text" id="adminTeam1" maxlength="18"></div>
+    </div>
+    <div class="admin-section">
+      <h3>Preset Questions (Main Board)</h3>
+      <div class="field"><select id="presetSelect"></select></div>
+      <div class="row-btns"><button class="btn btn-ghost" onclick="addPresetToDeck()">+ Add Preset to Deck</button></div>
+    </div>
+    <div class="admin-section">
+      <h3>Import / Export Full Deck (JSON)</h3>
+      <div class="field"><textarea id="jsonBox" placeholder="Paste a full game-deck JSON here to import…"></textarea></div>
+      <div class="row-btns">
+        <button class="btn btn-ghost" onclick="exportJSON()">Export</button>
+        <button class="btn btn-ghost" onclick="importJSON()">Import</button>
+      </div>
+    </div>
+    <div class="admin-section">
+      <h3>Fast Money — 5 Questions (edits show live)</h3>
+      <div id="fmAdminBlocks"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PRESETS = [
+  {question:"Name something you do before going to bed",answers:[{text:"Brush teeth",points:35},{text:"Set an alarm",points:24},{text:"Check phone",points:18},{text:"Lock the doors",points:12},{text:"Read a book",points:6},{text:"Take a shower",points:3},{text:"Pray",points:1},{text:"Let the dog out",points:1}]},
+  {question:"Name a reason someone would be late for work",answers:[{text:"Traffic",points:41},{text:"Overslept",points:27},{text:"Car trouble",points:14},{text:"Kids / school run",points:8},{text:"Bad weather",points:5},{text:"Public transit delay",points:3},{text:"Lost keys",points:1},{text:"Forgot something at home",points:1}]},
+  {question:"Name something people collect",answers:[{text:"Stamps",points:30},{text:"Coins",points:26},{text:"Sneakers",points:16},{text:"Trading cards",points:12},{text:"Comic books",points:7},{text:"Action figures",points:5},{text:"Vinyl records",points:3},{text:"Antiques",points:1}]}
+];
+
+let state = {
+  questions: PRESETS.map(p => ({question:p.question, answers:p.answers.map(a => ({...a}))})),
+  currentIndex:0, multiplier:1, revealed:[], strikes:0,
+  teams:[{name:"FAMILY 1",score:0},{name:"FAMILY 2",score:0}],
+  fastMoney:{questions:Array.from({length:5},()=>({question:'',p1Answer:'',p1Points:0,p1Revealed:false,p2Answer:'',p2Points:0,p2Revealed:false}))}
+};
+state.revealed = new Array(getCurrentQuestion().answers.length).fill(false);
+function getCurrentQuestion(){ return state.questions[state.currentIndex]; }
+let mode = 'main';
+
+/* ---------- AUDIO ---------- */
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+}
+function tone(freq, off, dur, type, peak){
+  const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+  osc.type = type;
+  const t0 = audioCtx.currentTime + off;
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t0); osc.stop(t0 + dur + 0.05);
+}
+function playDing(){ ensureAudio(); tone(880,0,.18,'sine',.28); tone(1318.5,.13,.4,'sine',.26); }
+function playBuzz(){ ensureAudio(); tone(140,0,.42,'sawtooth',.32); tone(90,0,.42,'square',.12); }
+function playFaceoffBuzzer(){
+  ensureAudio();
+  const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+  osc.type = 'square';
+  const t0 = audioCtx.currentTime;
+  osc.frequency.setValueAtTime(220,t0);
+  osc.frequency.linearRampToValueAtTime(105,t0+.9);
+  gain.gain.setValueAtTime(0.0001,t0);
+  gain.gain.exponentialRampToValueAtTime(.3,t0+.03);
+  gain.gain.exponentialRampToValueAtTime(0.0001,t0+1);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t0); osc.stop(t0+1.05);
+}
+function playTick(){ ensureAudio(); tone(1800,0,.09,'square',.18); }
+function playDoubleBuzzer(){ ensureAudio(); playBuzz(); setTimeout(playBuzz,230); }
+
+/* ---------- AUTO-FIT TEXT ---------- */
+function fitText(el){
+  const inner = el.firstElementChild;
+  if(!inner || !el.clientWidth) return; // hidden view: refit when shown
+  const small = window.innerWidth <= 640;
+  let size = Number((small && el.dataset.maxM) || el.dataset.max) || 20;
+  const min = Number(el.dataset.min) || 9;
+  const pad = parseFloat(getComputedStyle(el).paddingTop) + parseFloat(getComputedStyle(el).paddingBottom);
+  const availH = el.clientHeight - pad;
+  const availW = el.clientWidth - parseFloat(getComputedStyle(el).paddingLeft) - parseFloat(getComputedStyle(el).paddingRight);
+  el.style.fontSize = size + 'px';
+  while(size > min && (inner.scrollHeight > availH + 1 || inner.scrollWidth > availW + 1)){
+    size -= 0.5;
+    el.style.fontSize = size + 'px';
+  }
+}
+function fitAll(root){
+  (root || document).querySelectorAll('.ans-text,.fm-slot-ans').forEach(fitText);
+}
+window.addEventListener('resize', () => fitAll(document));
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitAll(document));
+
+/* ---------- MAIN BOARD RENDER ---------- */
+function calcRoundTotal(){
+  const q = getCurrentQuestion();
+  return q.answers.reduce((acc,a,i) => acc + (state.revealed[i] ? Number(a.points||0) : 0), 0) * state.multiplier;
+}
+function renderBoard(){
+  const q = getCurrentQuestion();
+  document.getElementById('questionText').textContent = q.question || 'Untitled question';
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  q.answers.forEach((ans,i) => {
+    const card = document.createElement('div');
+    card.className = 'card' + (state.revealed[i] ? ' revealed' : '');
+    card.onclick = () => toggleCard(i);
+    card.innerHTML = `<div class="card-inner">
+      <div class="card-face card-front"><span class="num">${i+1}</span></div>
+      <div class="card-face card-back"><span class="ans-text" data-max="22" data-max-m="18" data-min="9"><span class="fit-inner">${escapeHTML(ans.text || '???')}</span></span><span class="ans-pts">${Number(ans.points)||0}</span></div>
+    </div>`;
+    board.appendChild(card);
+  });
+  document.getElementById('roundTotal').textContent = calcRoundTotal();
+  document.getElementById('multBadge').textContent = state.multiplier + '×';
+  fitAll(board);
+}
+function renderStrikes(){
+  document.querySelectorAll('.strike-slot').forEach((el,i) => el.classList.toggle('on', i < state.strikes));
+}
+function renderScores(){
+  document.getElementById('team0Name').value = state.teams[0].name;
+  document.getElementById('team1Name').value = state.teams[1].name;
+  document.getElementById('team0Score').textContent = state.teams[0].score;
+  document.getElementById('team1Score').textContent = state.teams[1].score;
+}
+function renderQuestionNav(){
+  const total = state.questions.length;
+  document.getElementById('qCounter').textContent = `Q ${state.currentIndex+1} / ${total}`;
+  document.getElementById('prevBtn').disabled = state.currentIndex === 0;
+  document.getElementById('nextBtn').disabled = state.currentIndex === total-1;
+}
+function renderQuestionDeck(){
+  const wrap = document.getElementById('questionDeck');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i) => {
+    const row = document.createElement('div');
+    row.className = 'deck-row' + (i === state.currentIndex ? ' active' : '');
+    row.innerHTML = `<span class="deck-idx">${i+1}</span>
+      <span class="deck-text">${escapeHTML(q.question || 'Untitled question')}</span>
+      <span class="deck-btns">
+        <button data-act="up" data-i="${i}" ${i===0?'disabled':''}>▲</button>
+        <button data-act="down" data-i="${i}" ${i===state.questions.length-1?'disabled':''}>▼</button>
+        <button data-act="del" data-i="${i}" ${state.questions.length<=1?'disabled':''}>🗑</button>
+      </span>`;
+    row.querySelector('.deck-text').addEventListener('click', () => goToQuestion(i));
+    row.querySelectorAll('.deck-btns button').forEach(btn => btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const idx = Number(btn.dataset.i), act = btn.dataset.act;
+      if(act === 'up') moveQuestion(idx,-1); else if(act === 'down') moveQuestion(idx,1); else deleteQuestion(idx);
+    }));
+    wrap.appendChild(row);
+  });
+}
+function renderAdminBasics(){
+  const q = getCurrentQuestion();
+  document.getElementById('editingLabel').textContent = `Editing Question ${state.currentIndex+1} of ${state.questions.length}`;
+  document.getElementById('adminQuestion').value = q.question;
+  document.getElementById('adminTeam0').value = state.teams[0].name;
+  document.getElementById('adminTeam1').value = state.teams[1].name;
+  document.querySelectorAll('.mult-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.mult) === state.multiplier));
+}
+function renderAdminAnswers(){
+  const q = getCurrentQuestion();
+  const wrap = document.getElementById('answerRows');
+  wrap.innerHTML = '';
+  q.answers.forEach((ans,i) => {
+    const row = document.createElement('div');
+    row.className = 'answer-row';
+    row.innerHTML = `<span class="idx">${i+1}</span>
+      <input type="text" value="${escapeHTML(ans.text)}" placeholder="Answer text" data-role="text" data-i="${i}">
+      <input type="number" value="${Number(ans.points)||0}" min="0" data-role="points" data-i="${i}">
+      <button title="Remove slot" data-i="${i}" data-role="remove">✕</button>`;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll('[data-role="text"]').forEach(inp => inp.addEventListener('input', e => {
+    getCurrentQuestion().answers[Number(e.target.dataset.i)].text = e.target.value;
+    renderBoard(); renderQuestionDeck();
+  }));
+  wrap.querySelectorAll('[data-role="points"]').forEach(inp => inp.addEventListener('input', e => {
+    getCurrentQuestion().answers[Number(e.target.dataset.i)].points = Number(e.target.value) || 0;
+    renderBoard();
+  }));
+  wrap.querySelectorAll('[data-role="remove"]').forEach(btn => btn.addEventListener('click', e => removeAnswerSlot(Number(e.target.dataset.i))));
+  const add = document.getElementById('addSlotBtn');
+  add.disabled = q.answers.length >= 8;
+  add.style.opacity = q.answers.length >= 8 ? .4 : 1;
+}
+function renderPresetSelect(){
+  document.getElementById('presetSelect').innerHTML = PRESETS.map((p,i) => `<option value="${i}">${escapeHTML(p.question)}</option>`).join('');
+}
+function renderAll(){
+  renderBoard(); renderStrikes(); renderScores(); renderQuestionNav(); renderQuestionDeck();
+  renderAdminBasics(); renderAdminAnswers(); renderFastMoneyBoard(); renderFastMoneyAdmin();
+}
+function escapeHTML(str){
+  return String(str ?? '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+
+/* ---------- MAIN BOARD ACTIONS ---------- */
+function toggleCard(i){
+  if(!getCurrentQuestion().answers[i]) return;
+  state.revealed[i] = !state.revealed[i];
+  if(state.revealed[i]) playDing();
+  renderBoard();
+}
+function triggerStrike(){
+  if(state.strikes < 3){ state.strikes++; renderStrikes(); }
+  playBuzz();
+  flashStrikeOverlay();
+}
+function flashStrikeOverlay(){
+  const overlay = document.getElementById('strikeOverlay');
+  overlay.querySelectorAll('.strike-x-big').forEach((x,i) => { x.style.display = i < state.strikes ? 'inline-block' : 'none'; });
+  overlay.classList.remove('show');
+  void overlay.offsetWidth;
+  overlay.classList.add('show');
+  clearTimeout(flashStrikeOverlay._t);
+  flashStrikeOverlay._t = setTimeout(() => overlay.classList.remove('show'), 650);
+}
+function resetStrikes(){ state.strikes = 0; renderStrikes(); }
+function resetForCurrentQuestion(){
+  state.revealed = new Array(getCurrentQuestion().answers.length).fill(false);
+  state.strikes = 0;
+}
+function resetBoard(){ resetForCurrentQuestion(); renderBoard(); renderStrikes(); }
+function awardPoints(t){
+  const total = calcRoundTotal();
+  if(total <= 0) return;
+  state.teams[t].score += total;
+  renderScores();
+}
+
+/* ---------- QUESTION NAV / DECK ---------- */
+function refreshQuestionUI(){
+  renderBoard(); renderStrikes(); renderQuestionNav(); renderQuestionDeck(); renderAdminBasics(); renderAdminAnswers();
+}
+function goToQuestion(index){
+  const c = Math.max(0, Math.min(index, state.questions.length-1));
+  if(c === state.currentIndex) return;
+  state.currentIndex = c;
+  resetForCurrentQuestion();
+  refreshQuestionUI();
+}
+function nextQuestion(){ goToQuestion(state.currentIndex+1); }
+function prevQuestion(){ goToQuestion(state.currentIndex-1); }
+function addNewQuestion(){
+  state.questions.push({question:'New Question',answers:[{text:'',points:0},{text:'',points:0},{text:'',points:0},{text:'',points:0}]});
+  goToQuestion(state.questions.length-1);
+  refreshQuestionUI();
+}
+function deleteQuestion(i){
+  if(state.questions.length <= 1){ alert('You need at least one question in the deck.'); return; }
+  const wasCurrent = i === state.currentIndex;
+  state.questions.splice(i,1);
+  if(i < state.currentIndex) state.currentIndex--;
+  else if(wasCurrent) state.currentIndex = Math.min(state.currentIndex, state.questions.length-1);
+  if(wasCurrent) resetForCurrentQuestion();
+  refreshQuestionUI();
+}
+function moveQuestion(i, dir){
+  const j = i + dir;
+  if(j < 0 || j >= state.questions.length) return;
+  [state.questions[i], state.questions[j]] = [state.questions[j], state.questions[i]];
+  if(state.currentIndex === i) state.currentIndex = j; else if(state.currentIndex === j) state.currentIndex = i;
+  renderQuestionDeck(); renderQuestionNav(); renderAdminBasics(); renderAdminAnswers();
+}
+
+/* ---------- ADMIN ---------- */
+function toggleAdmin(){ document.getElementById('adminPanel').classList.contains('open') ? closeAdmin() : openAdmin(); }
+function openAdmin(){
+  renderAdminBasics(); renderAdminAnswers(); renderQuestionDeck(); renderFastMoneyAdmin();
+  document.getElementById('adminPanel').classList.add('open');
+  document.getElementById('adminScrim').classList.add('open');
+}
+function closeAdmin(){
+  document.getElementById('adminPanel').classList.remove('open');
+  document.getElementById('adminScrim').classList.remove('open');
+}
+function addAnswerSlot(){
+  const q = getCurrentQuestion();
+  if(q.answers.length >= 8) return;
+  q.answers.push({text:'',points:0});
+  state.revealed.push(false);
+  renderAdminAnswers(); renderBoard();
+}
+function removeAnswerSlot(i){
+  getCurrentQuestion().answers.splice(i,1);
+  state.revealed.splice(i,1);
+  renderAdminAnswers(); renderBoard();
+}
+function setMultiplier(m){
+  state.multiplier = m;
+  document.querySelectorAll('.mult-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.mult) === m));
+  renderBoard();
+}
+function addPresetToDeck(){
+  const preset = PRESETS[Number(document.getElementById('presetSelect').value)];
+  if(!preset) return;
+  state.questions.push({question:preset.question, answers:preset.answers.map(a => ({...a}))});
+  goToQuestion(state.questions.length-1);
+  refreshQuestionUI();
+}
+function exportJSON(){
+  document.getElementById('jsonBox').value = JSON.stringify({
+    multiplier:state.multiplier,
+    questions:state.questions.map(q => ({question:q.question, answers:q.answers.map(a => ({text:a.text,points:a.points}))}))
+  }, null, 2);
+}
+function importJSON(){
+  const raw = document.getElementById('jsonBox').value.trim();
+  if(!raw) return;
+  try{
+    const data = JSON.parse(raw);
+    if(!Array.isArray(data.questions) || !data.questions.length) throw new Error('Expected a non-empty "questions" array');
+    state.questions = data.questions.map(q => ({
+      question:String(q.question || 'Untitled question'),
+      answers:(Array.isArray(q.answers) ? q.answers : []).slice(0,8).map(a => ({text:String(a.text || ''), points:Number(a.points) || 0}))
+    }));
+    state.multiplier = [1,2,3].includes(Number(data.multiplier)) ? Number(data.multiplier) : 1;
+    state.currentIndex = 0;
+    resetForCurrentQuestion();
+    renderAll();
+  }catch(err){ alert('Could not import: ' + err.message); }
+}
+
+/* ---------- MODE ---------- */
+function setMode(m){
+  mode = m;
+  document.getElementById('mainBoardView').style.display = m === 'main' ? '' : 'none';
+  document.getElementById('fastMoneyView').style.display = m === 'fastmoney' ? '' : 'none';
+  document.getElementById('modeToggleBtn').textContent = m === 'main' ? '🎯 Fast Money (M)' : '🏠 Main Board (M)';
+  updateHintText();
+  fitAll(document);
+}
+function toggleMode(){ setMode(mode === 'main' ? 'fastmoney' : 'main'); }
+function updateHintText(){
+  document.getElementById('hintText').innerHTML = mode === 'main'
+    ? `Press <kbd>Space</kbd> for a strike · <kbd>1</kbd>–<kbd>8</kbd> to flip an answer · <kbd>N</kbd> / <kbd>P</kbd> to change questions · <kbd>R</kbd> to reset the round · <kbd>E</kbd> to open the editor · <kbd>M</kbd> for Fast Money.`
+    : `Click a slot to reveal it · <kbd>T</kbd> Player 1 timer · <kbd>Y</kbd> Player 2 timer · <kbd>D</kbd> duplicate buzzer · <kbd>E</kbd> to type questions, answers &amp; points · <kbd>M</kbd> for the Main Board.`;
+}
+
+/* ---------- FAST MONEY ---------- */
+function calcFastMoneyTotal(){
+  return state.fastMoney.questions.reduce((acc,q) =>
+    acc + (q.p1Revealed ? Number(q.p1Points||0) : 0) + (q.p2Revealed ? Number(q.p2Points||0) : 0), 0);
+}
+function updateFmTotalDisplay(){
+  const total = calcFastMoneyTotal();
+  document.getElementById('fmTotalValue').textContent = total;
+  document.getElementById('fmTotalBox').classList.toggle('hit', total >= 200);
+}
+function buildFmSlot(q, i, player){
+  const slot = document.createElement('div');
+  slot.className = 'fm-slot' + (q[player+'Revealed'] ? ' revealed' : '');
+  slot.innerHTML = `<span class="fm-slot-ans" data-max="28" data-max-m="17" data-min="10"><span class="fit-inner">${escapeHTML(q[player+'Answer'])}</span></span><span class="fm-slot-pts">${Number(q[player+'Points'])||0}</span>`;
+  slot.addEventListener('click', () => toggleFmReveal(i, player));
+  return slot;
+}
+function renderFastMoneyBoard(){
+  const wrap = document.getElementById('fmRows');
+  wrap.innerHTML = '';
+  state.fastMoney.questions.forEach((q,i) => {
+    const row = document.createElement('div');
+    row.className = 'fm-row';
+    const cap = document.createElement('div');
+    cap.className = 'fm-q-cap';
+    cap.textContent = `Q${i+1}: ${q.question || '—'}`;
+    const pair = document.createElement('div');
+    pair.className = 'fm-pair';
+    pair.appendChild(buildFmSlot(q,i,'p1'));
+    pair.appendChild(buildFmSlot(q,i,'p2'));
+    row.appendChild(cap); row.appendChild(pair);
+    wrap.appendChild(row);
+  });
+  updateFmTotalDisplay();
+  fitAll(wrap);
+}
+function toggleFmQuestions(){ document.getElementById('fmTv').classList.toggle('hide-q'); }
+function toggleFmReveal(i, player){
+  const q = state.fastMoney.questions[i];
+  const key = player + 'Revealed';
+  q[key] = !q[key];
+  if(q[key]){
+    // Reveal sound depends on the points being revealed for this player's slot
+    if(Number(q[player + 'Points']) > 0) playDing();
+    else playBuzz();
+  }
+  renderFastMoneyBoard();
+}
+function renderFastMoneyAdmin(){
+  const wrap = document.getElementById('fmAdminBlocks');
+  wrap.innerHTML = '';
+  state.fastMoney.questions.forEach((q,i) => {
+    const block = document.createElement('div');
+    block.className = 'fm-admin-block';
+    block.innerHTML = `<label class="fm-admin-label">Fast Money Q${i+1}</label>
+      <input type="text" class="fm-admin-question" placeholder="Question ${i+1}" value="${escapeHTML(q.question)}">
+      <div class="fm-admin-players">
+        <div class="fm-admin-player"><span>P1</span><input type="text" class="fm-admin-ans" placeholder="Answer" value="${escapeHTML(q.p1Answer)}"><input type="number" class="fm-admin-pts" min="0" value="${Number(q.p1Points)||0}"></div>
+        <div class="fm-admin-player"><span>P2</span><input type="text" class="fm-admin-ans" placeholder="Answer" value="${escapeHTML(q.p2Answer)}"><input type="number" class="fm-admin-pts" min="0" value="${Number(q.p2Points)||0}"></div>
+      </div>`;
+    const [p1a, p2a] = block.querySelectorAll('.fm-admin-ans');
+    const [p1p, p2p] = block.querySelectorAll('.fm-admin-pts');
+    block.querySelector('.fm-admin-question').addEventListener('input', e => { q.question = e.target.value; renderFastMoneyBoard(); });
+    p1a.addEventListener('input', e => { q.p1Answer = e.target.value; renderFastMoneyBoard(); });
+    p2a.addEventListener('input', e => { q.p2Answer = e.target.value; renderFastMoneyBoard(); });
+    p1p.addEventListener('input', e => { q.p1Points = Number(e.target.value) || 0; renderFastMoneyBoard(); });
+    p2p.addEventListener('input', e => { q.p2Points = Number(e.target.value) || 0; renderFastMoneyBoard(); });
+    wrap.appendChild(block);
+  });
+}
+
+/* Fast Money timer — one oval badge shows the active player's countdown */
+const FM_P1_TIME = 20, FM_P2_TIME = 25;
+let fmActive = 1, fmRemaining = FM_P1_TIME, fmInterval = null;
+function updateFmTimerDisplay(){
+  document.getElementById('fmTimerLabel').textContent = 'PLAYER ' + fmActive;
+  document.getElementById('fmTimerValue').textContent = fmRemaining;
+  document.getElementById('fmTimerBadge').classList.toggle('low', fmRemaining > 0 && fmRemaining <= 5);
+}
+function runFmTimer(player){
+  ensureAudio();
+  clearInterval(fmInterval);
+  fmActive = player;
+  fmRemaining = player === 1 ? FM_P1_TIME : FM_P2_TIME;
+  updateFmTimerDisplay();
+  fmInterval = setInterval(() => {
+    fmRemaining--;
+    if(fmRemaining <= 0){ fmRemaining = 0; clearInterval(fmInterval); playBuzz(); }
+    else if(fmRemaining <= 5) playTick();
+    updateFmTimerDisplay();
+  }, 1000);
+}
+function startP1Timer(){ runFmTimer(1); }
+function startP2Round(){ runFmTimer(2); }
+function triggerDuplicateBuzzer(){ playDoubleBuzzer(); }
+function resetFastMoney(){
+  state.fastMoney.questions.forEach(q => { q.p1Revealed = false; q.p2Revealed = false; });
+  clearInterval(fmInterval);
+  fmActive = 1; fmRemaining = FM_P1_TIME;
+  updateFmTimerDisplay();
+  renderFastMoneyBoard();
+}
+
+/* ---------- EVENTS ---------- */
+document.getElementById('adminQuestion').addEventListener('input', e => {
+  getCurrentQuestion().question = e.target.value;
+  renderBoard(); renderQuestionDeck();
+});
+[0,1].forEach(n => {
+  document.getElementById('adminTeam'+n).addEventListener('input', e => {
+    state.teams[n].name = e.target.value || 'FAMILY ' + (n+1);
+    renderScores();
+  });
+  document.getElementById('team'+n+'Name').addEventListener('input', e => {
+    state.teams[n].name = e.target.value || 'FAMILY ' + (n+1);
+    document.getElementById('adminTeam'+n).value = state.teams[n].name;
+  });
+});
+document.querySelectorAll('.mult-btn').forEach(btn => btn.addEventListener('click', () => setMultiplier(Number(btn.dataset.mult))));
+
+window.addEventListener('keydown', e => {
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if(e.code === 'Escape'){ closeAdmin(); return; }
+  if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  const key = e.key.toLowerCase();
+  if(key === 'e'){ toggleAdmin(); return; }
+  if(key === 'm'){ toggleMode(); return; }
+  if(mode === 'main'){
+    if(e.code === 'Space'){ e.preventDefault(); triggerStrike(); return; }
+    if(e.key >= '1' && e.key <= '8'){
+      const idx = Number(e.key) - 1;
+      if(idx < getCurrentQuestion().answers.length) toggleCard(idx);
+      return;
+    }
+    if(key === 'r') resetBoard();
+    else if(key === 'n') nextQuestion();
+    else if(key === 'p') prevQuestion();
+  }else{
+    if(key === 't') startP1Timer();
+    else if(key === 'y') startP2Round();
+    else if(key === 'd') triggerDuplicateBuzzer();
+  }
+});
+
+/* ---------- INIT ---------- */
+renderPresetSelect();
+renderAll();
+setMode('main');
+updateFmTimerDisplay();
+</script>
+</body>
+</html>
